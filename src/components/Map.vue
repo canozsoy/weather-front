@@ -16,18 +16,14 @@
                       @click="triggerRouter"
             >
                 <l-tooltip>Click to see weather</l-tooltip>
-                <l-popup>
-                    <router-view />
-                </l-popup>
             </l-marker>
-
         </l-map>
     </div>
 </template>
 
 <script>
 import {
-    LMap, LTileLayer, LMarker, LTooltip, LPopup,
+    LMap, LTileLayer, LMarker, LTooltip,
 } from 'vue2-leaflet';
 import { mapActions, mapGetters } from 'vuex';
 
@@ -38,7 +34,6 @@ export default {
         LTileLayer,
         LMarker,
         LTooltip,
-        LPopup,
     },
     data() {
         return {
@@ -70,27 +65,59 @@ export default {
             return this.$route.params.id;
         },
     },
+    watch: {
+        $route() {
+            this.handleRouteChange();
+        },
+    },
+    mounted() {
+        window.addEventListener('onhashchange', () => {
+            console.log('asdf');
+        });
+    },
     updated() { // ugly solution this should be mounted but in mounted it is undefined
         if (this.routeId) {
             this.openRelatedPopup();
         }
     },
     methods: {
-        ...mapActions(['fetchLocations']),
-        triggerRouter(event) {
+        ...mapActions(['fetchLocations', 'fetchWeather']),
+        async triggerRouter(event) {
             const target = this.getLocations.find((x) => (x.latitude === event.latlng.lat)
              && (x.longitude === event.latlng.lng));
             // eslint-disable-next-line no-underscore-dangle
             const route = `/locations/${target._id}`;
+
             if (this.$route.path !== route) {
-                this.$router.push(route);
+                await this.$router.push(route);
+            }
+
+            this.handleRouteChange();
+        },
+        handleRouteChange() {
+            if (this.routeId) {
+                this.openRelatedPopup();
+            } else {
+                this.closePopups();
             }
         },
-        openRelatedPopup() {
-            this.$refs[this.routeId][0].mapObject.openPopup();
+        async openRelatedPopup() {
+            this.weather = await this.fetchWeather({ id: this.routeId });
+
+            const popUpHTML = `<strong>City:</strong> ${this.weather.name}<br>`
+            + `<strong>Weather:</strong> ${this.weather.weather} &#176C`;
+
+            const marker = this.$refs[this.routeId][0].mapObject;
+            marker.bindPopup(popUpHTML).openPopup();
         },
         restoreRouter() {
-            this.$router.push('/locations');
+            const route = this.$route.path;
+            if (route !== '/locations') {
+                this.$router.push('/locations');
+            }
+        },
+        closePopups() {
+            this.$refs.map.mapObject.closePopup();
         },
     },
 };

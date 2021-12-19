@@ -16,7 +16,6 @@ const routes = [
         component: Locations,
         children: [{
             path: ':id',
-            component: () => import('../components/Weather.vue'),
         },
         ],
     },

@@ -9,7 +9,6 @@
         >
             <l-tile-layer :url="tileOptions.url" :attribution="tileOptions.attribution" />
             <l-marker v-for="(item, index) in getLocations"
-                      :marker-id="item.id"
                       :key="index"
                       :lat-lng="[item.latitude, item.longitude]"
                       :ref="item._id"
@@ -50,9 +49,6 @@ export default {
                 attribution:
         '&copy; <a target="_blank" href="http://osm.org/copyright">OpenStreetMap</a> contributors',
             },
-            markerOptions: {
-                markerLatLng: [51.504, -0.159],
-            },
             weather: '',
         };
     },
@@ -70,15 +66,9 @@ export default {
             this.handleRouteChange();
         },
     },
-    mounted() {
-        window.addEventListener('onhashchange', () => {
-            console.log('asdf');
-        });
-    },
-    updated() { // ugly solution this should be mounted but in mounted it is undefined
-        if (this.routeId) {
-            this.openRelatedPopup();
-        }
+    async mounted() {
+        await this.$nextTick();
+        this.handleRouteChange();
     },
     methods: {
         ...mapActions(['fetchLocations', 'fetchWeather']),
